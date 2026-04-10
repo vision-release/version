@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Local build output
+bin/
+.cache/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
