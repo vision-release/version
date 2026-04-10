@@ -8,15 +8,15 @@ import (
 )
 
 type fakeGit struct {
-	isRepo      bool
+	isRepo       bool
 	fetchTagsErr error
-	tagsErr     error
-	tags        []string
+	tagsErr      error
+	tags         []string
 	createTagErr error
-	stageErr    error
-	commitErr   error
-	pushErr     error
-	pushTagErr  error
+	stageErr     error
+	commitErr    error
+	pushErr      error
+	pushTagErr   error
 
 	fetchTagsCalls []string
 	createTagCalls []string

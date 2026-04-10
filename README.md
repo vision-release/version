@@ -238,7 +238,7 @@ Examples:
 - `v2.3.3` -> `v3.0.0-0`
 - `v3.0.0-0` -> `v3.0.0-1`
 
-## Interactive And Forced Mode
+## Interactive And Non-Interactive Mode
 
 By default, version-changing commands are interactive:
 
@@ -253,13 +253,13 @@ Flow:
 3. Create the tag and update local files.
 4. Ask whether the tag should be pushed.
 
-You can skip the prompts with `-f`:
+You can skip the prompts with `-y`:
 
 ```sh
-version patch -f
+version patch -y
 ```
 
-In forced mode, the tool:
+With `-y`, the tool:
 
 - updates version files
 - creates the Git tag

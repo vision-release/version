@@ -11,11 +11,11 @@ import (
 )
 
 type fakeGit struct {
-	isRepo        bool
-	tags          []string
+	isRepo         bool
+	tags           []string
 	createTagCalls []string
-	pushTagCalls  []string
-	pushCalls     int
+	pushTagCalls   []string
+	pushCalls      int
 }
 
 func (f *fakeGit) IsRepo(root string) bool { return f.isRepo }
@@ -143,6 +143,46 @@ func TestRunBumpForceCreatesAndPushesTag(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "pushed v1.2.4") {
 		t.Fatalf("stdout = %q", stdout.String())
+	}
+}
+
+func TestRunCommandHelpForNestedFlag(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	if err := Run([]string{"prepatch", "--help"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := stdout.String()
+	if !strings.Contains(got, "version prepatch [--help] [-y]") {
+		t.Fatalf("stdout = %q", got)
+	}
+	if !strings.Contains(got, "numeric prerelease") {
+		t.Fatalf("stdout = %q", got)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestRunCommandHelpViaHelpSubcommand(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	if err := Run([]string{"help", "current"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := stdout.String()
+	if !strings.Contains(got, "version current") {
+		t.Fatalf("stdout = %q", got)
+	}
+	if !strings.Contains(got, "Works outside a Git repository.") {
+		t.Fatalf("stdout = %q", got)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q", stderr.String())
 	}
 }
 
