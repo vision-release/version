@@ -12,6 +12,8 @@ type fakeGit struct {
 	fetchTagsErr error
 	tagsErr      error
 	tags         []string
+	remoteURL    string
+	remoteURLErr error
 	createTagErr error
 	stageErr     error
 	commitErr    error
@@ -37,6 +39,10 @@ func (f *fakeGit) FetchTags(root string) error {
 
 func (f *fakeGit) Tags(root string) ([]string, error) {
 	return f.tags, f.tagsErr
+}
+
+func (f *fakeGit) RemoteURL(root, name string) (string, error) {
+	return f.remoteURL, f.remoteURLErr
 }
 
 func (f *fakeGit) CreateTag(root, tag string) error {
@@ -172,6 +178,49 @@ func TestPushStagesVersionFilesCommitsAndPushesTag(t *testing.T) {
 	}
 	if !reflect.DeepEqual(git.pushTagCalls, []string{"v1.2.3"}) {
 		t.Fatalf("push tag calls = %#v", git.pushTagCalls)
+	}
+}
+
+func TestRepositoryURLsForGitHubRemote(t *testing.T) {
+	dir := t.TempDir()
+	app := NewApp(&fakeGit{
+		isRepo:    true,
+		remoteURL: "git@github.com:acme/widget.git",
+	}, dir)
+
+	got, err := app.RepositoryURLs()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got.GitURL != "git@github.com:acme/widget.git" {
+		t.Fatalf("git url = %q", got.GitURL)
+	}
+	if got.Repository != "https://github.com/acme/widget" {
+		t.Fatalf("repository = %q", got.Repository)
+	}
+	if got.PipelineURL != "https://github.com/acme/widget/actions" {
+		t.Fatalf("pipeline url = %q", got.PipelineURL)
+	}
+}
+
+func TestRepositoryURLsForGitLabRemote(t *testing.T) {
+	dir := t.TempDir()
+	app := NewApp(&fakeGit{
+		isRepo:    true,
+		remoteURL: "https://gitlab.com/acme/platform/widget.git",
+	}, dir)
+
+	got, err := app.RepositoryURLs()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got.Repository != "https://gitlab.com/acme/platform/widget" {
+		t.Fatalf("repository = %q", got.Repository)
+	}
+	if got.PipelineURL != "https://gitlab.com/acme/platform/widget/-/pipelines" {
+		t.Fatalf("pipeline url = %q", got.PipelineURL)
 	}
 }
 

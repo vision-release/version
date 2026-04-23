@@ -13,6 +13,7 @@ import (
 type fakeGit struct {
 	isRepo         bool
 	tags           []string
+	remoteURL      string
 	createTagCalls []string
 	pushTagCalls   []string
 	pushCalls      int
@@ -23,6 +24,8 @@ func (f *fakeGit) IsRepo(root string) bool { return f.isRepo }
 func (f *fakeGit) FetchTags(root string) error { return nil }
 
 func (f *fakeGit) Tags(root string) ([]string, error) { return f.tags, nil }
+
+func (f *fakeGit) RemoteURL(root, name string) (string, error) { return f.remoteURL, nil }
 
 func (f *fakeGit) CreateTag(root, tag string) error {
 	f.createTagCalls = append(f.createTagCalls, tag)
@@ -93,6 +96,30 @@ func TestRunResolvePrintsResolvedInformation(t *testing.T) {
 		"local version: 1.0.0",
 		"git version: 1.0.1",
 		"resolved version: 1.0.1",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("stdout missing %q: %q", want, got)
+		}
+	}
+}
+
+func TestRunURLPrintsRepositoryLinks(t *testing.T) {
+	dir := t.TempDir()
+	app := versioning.NewApp(&fakeGit{
+		isRepo:    true,
+		remoteURL: "git@gitlab.com:acme/platform/widget.git",
+	}, dir)
+	var stdout bytes.Buffer
+
+	if err := runURL(app, &stdout); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := stdout.String()
+	for _, want := range []string{
+		"git repository url: git@gitlab.com:acme/platform/widget.git",
+		"repository link: https://gitlab.com/acme/platform/widget",
+		"pipeline link: https://gitlab.com/acme/platform/widget/-/pipelines",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("stdout missing %q: %q", want, got)
@@ -179,6 +206,26 @@ func TestRunCommandHelpViaHelpSubcommand(t *testing.T) {
 		t.Fatalf("stdout = %q", got)
 	}
 	if !strings.Contains(got, "Works outside a Git repository.") {
+		t.Fatalf("stdout = %q", got)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestRunCommandHelpForURL(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	if err := Run([]string{"help", "url"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := stdout.String()
+	if !strings.Contains(got, "version url") {
+		t.Fatalf("stdout = %q", got)
+	}
+	if !strings.Contains(got, "GitHub or GitLab") {
 		t.Fatalf("stdout = %q", got)
 	}
 	if stderr.Len() != 0 {

@@ -14,6 +14,7 @@ type GitClient interface {
 	IsRepo(root string) bool
 	FetchTags(root string) error
 	Tags(root string) ([]string, error)
+	RemoteURL(root, name string) (string, error)
 	CreateTag(root, tag string) error
 	StageFiles(root string, files []string) error
 	Commit(root, message string) error
@@ -54,6 +55,17 @@ func (RealGit) Tags(root string) ([]string, error) {
 	}
 
 	return lines, nil
+}
+
+func (RealGit) RemoteURL(root, name string) (string, error) {
+	cmd := exec.Command("git", "remote", "get-url", name)
+	cmd.Dir = root
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("git remote get-url %s failed: %s", name, bytes.TrimSpace(output))
+	}
+
+	return strings.TrimSpace(string(output)), nil
 }
 
 func (RealGit) CreateTag(root, tag string) error {

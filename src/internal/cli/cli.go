@@ -48,6 +48,12 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			return nil
 		}
 		return runResolve(app, stdout)
+	case "url":
+		if wantsHelp(args[1:]) {
+			printCommandHelp(stdout, "url")
+			return nil
+		}
+		return runURL(app, stdout)
 	case "patch", "minor", "major", "prepatch", "preminor", "premajor":
 		if wantsHelp(args[1:]) {
 			printCommandHelp(stdout, args[0])
@@ -130,6 +136,18 @@ func runResolve(app *versioning.App, stdout io.Writer) error {
 		_, _ = fmt.Fprintf(stdout, "resolved version: %s\n", result.ResolvedVersion.String())
 	}
 
+	return nil
+}
+
+func runURL(app *versioning.App, stdout io.Writer) error {
+	result, err := app.RepositoryURLs()
+	if err != nil {
+		return err
+	}
+
+	_, _ = fmt.Fprintf(stdout, "git repository url: %s\n", result.GitURL)
+	_, _ = fmt.Fprintf(stdout, "repository link: %s\n", result.Repository)
+	_, _ = fmt.Fprintf(stdout, "pipeline link: %s\n", result.PipelineURL)
 	return nil
 }
 
@@ -224,6 +242,16 @@ func printCommandHelp(w io.Writer, command string) bool {
 		_, _ = fmt.Fprintln(w, "  Syncs package.json and meta.yml when both exist.")
 		_, _ = fmt.Fprintln(w, "  Requires a Git repository.")
 		return true
+	case "url":
+		_, _ = fmt.Fprintln(w, "version url")
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintln(w, "Read the origin remote and print repository URLs for GitHub or GitLab.")
+		_, _ = fmt.Fprintln(w, "")
+		_, _ = fmt.Fprintln(w, "Output:")
+		_, _ = fmt.Fprintln(w, "  The configured Git remote URL.")
+		_, _ = fmt.Fprintln(w, "  The public repository link.")
+		_, _ = fmt.Fprintln(w, "  The pipeline page link.")
+		return true
 	case "patch":
 		printBumpHelp(w, "patch", "Create the next patch version.", "v1.2.3 -> v1.2.4, v1.2.3-4 -> v1.2.4")
 		return true
@@ -284,6 +312,8 @@ func printHelp(w io.Writer) {
 	_, _ = fmt.Fprintln(w, "  resolve    Fetch tags, compare local version and latest Git tag,")
 	_, _ = fmt.Fprintln(w, "             then print the resolved information. If package.json")
 	_, _ = fmt.Fprintln(w, "             and meta.yml both exist, resolve syncs both files.")
+	_, _ = fmt.Fprintln(w, "  url        Read the origin remote and print the Git URL, public")
+	_, _ = fmt.Fprintln(w, "             repository link, and pipeline link for GitHub or GitLab.")
 	_, _ = fmt.Fprintln(w, "  patch      Use the highest Git version and create the next patch tag.")
 	_, _ = fmt.Fprintln(w, "             Example: v1.2.3 -> v1.2.4, v1.2.3-4 -> v1.2.4")
 	_, _ = fmt.Fprintln(w, "  minor      Use the highest Git version and create the next minor tag.")

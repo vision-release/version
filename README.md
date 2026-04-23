@@ -184,6 +184,19 @@ Print the current local version from `package.json` or `meta.yml`.
 
 Fetch tags, detect the latest Git version, compare it with local version files, and print the resolved state.
 
+### `version url`
+
+Read the `origin` remote and print:
+
+- the configured Git repository URL
+- the public repository link
+- the pipeline page link
+
+Supported providers:
+
+- GitHub: pipeline link points to the repository Actions page
+- GitLab: pipeline link points to the repository Pipelines page
+
 ### `version patch`
 
 Create the next patch version.
