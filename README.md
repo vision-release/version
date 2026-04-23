@@ -266,13 +266,13 @@ Flow:
 3. Create the tag and update local files.
 4. Ask whether the tag should be pushed.
 
-You can skip the prompts with `-y`:
+You can skip the prompts with `-y` or `-f`:
 
 ```sh
 version patch -y
 ```
 
-With `-y`, the tool:
+With `-y` or `-f`, the tool:
 
 - updates version files
 - creates the Git tag

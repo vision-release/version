@@ -11,8 +11,12 @@ import (
 	"version/internal/versioning"
 )
 
+var newApp = func() *versioning.App {
+	return versioning.NewApp(versioning.RealGit{}, ".")
+}
+
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-	app := versioning.NewApp(versioning.RealGit{}, ".")
+	app := newApp()
 
 	if len(args) == 0 {
 		printHelp(stdout)
@@ -59,8 +63,14 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			printCommandHelp(stdout, args[0])
 			return nil
 		}
-		yes := len(args) > 1 && args[1] == "-y"
-		return runBump(app, stdin, stdout, args[0], yes)
+		force := false
+		for _, arg := range args[1:] {
+			if arg == "-y" || arg == "-f" {
+				force = true
+				break
+			}
+		}
+		return runBump(app, stdin, stdout, args[0], force)
 	default:
 		printHelp(stderr)
 		return fmt.Errorf("unknown command: %s", args[0])
@@ -278,14 +288,14 @@ func printCommandHelp(w io.Writer, command string) bool {
 }
 
 func printBumpHelp(w io.Writer, command, description, example string) {
-	_, _ = fmt.Fprintf(w, "version %s [--help] [-y]\n", command)
+	_, _ = fmt.Fprintf(w, "version %s [--help] [-y|-f]\n", command)
 	_, _ = fmt.Fprintln(w, "")
 	_, _ = fmt.Fprintln(w, description)
 	_, _ = fmt.Fprintln(w, "")
 	_, _ = fmt.Fprintf(w, "Example: %s\n", example)
 	_, _ = fmt.Fprintln(w, "")
 	_, _ = fmt.Fprintln(w, "Options:")
-	_, _ = fmt.Fprintln(w, "  -y    Skip prompts, create the tag, and push it immediately.")
+	_, _ = fmt.Fprintln(w, "  -y, -f    Skip prompts, create the tag, and push it immediately.")
 }
 
 func printHelp(w io.Writer) {

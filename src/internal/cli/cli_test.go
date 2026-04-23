@@ -182,11 +182,58 @@ func TestRunCommandHelpForNestedFlag(t *testing.T) {
 	}
 
 	got := stdout.String()
-	if !strings.Contains(got, "version prepatch [--help] [-y]") {
+	if !strings.Contains(got, "version prepatch [--help] [-y|-f]") {
+		t.Fatalf("stdout = %q", got)
+	}
+	if !strings.Contains(got, "-y, -f") {
 		t.Fatalf("stdout = %q", got)
 	}
 	if !strings.Contains(got, "numeric prerelease") {
 		t.Fatalf("stdout = %q", got)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q", stderr.String())
+	}
+}
+
+func TestRunAcceptsForceAlias(t *testing.T) {
+	dir := t.TempDir()
+	git := &fakeGit{isRepo: true, tags: []string{"v1.2.3"}}
+	prev, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(prev)
+	})
+
+	writeCLIFile(t, filepath.Join(dir, "meta.yml"), "name: demo\nversion: 1.2.3\n")
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	realNewApp := newApp
+	newApp = func() *versioning.App {
+		return versioning.NewApp(git, ".")
+	}
+	t.Cleanup(func() {
+		newApp = realNewApp
+	})
+
+	if err := Run([]string{"minor", "-f"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(git.createTagCalls) != 1 || git.createTagCalls[0] != "v1.3.0" {
+		t.Fatalf("create tag calls = %#v", git.createTagCalls)
+	}
+	if len(git.pushTagCalls) != 1 || git.pushTagCalls[0] != "v1.3.0" {
+		t.Fatalf("push tag calls = %#v", git.pushTagCalls)
+	}
+	if !strings.Contains(stdout.String(), "pushed v1.3.0") {
+		t.Fatalf("stdout = %q", stdout.String())
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q", stderr.String())
